@@ -1,6 +1,6 @@
 # 🏓 Pickleball Scoreboard & OBS Overlay
 
-Developed by **Jerson Mata Jimenez** for Camsur Pickleball Club.
+Developed by **Jerson Mata Jemenez** for Camsur Pickleball Club.
 
 A lightweight, web-based Pickleball Scoreboard system designed for live broadcasting, OBS (Open Broadcaster Software) overlays, and match logging. It features a responsive Control Panel, an OBS-friendly Display Overlay, and a Match History Log, all synchronized in real-time through a lightweight Python local server with Excel-based persistence.
 
