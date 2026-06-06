@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pickleball Scoreboard - Match History</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: transparent !important; /* Transparent background for OBS overlay */
+            color: #ffffff;
+            min-height: 100vh;
+            padding: clamp(4px, 1.5vw, 12px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* Fluid desktop/overlay background wrapper */
+        .page-wrapper {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            gap: clamp(6px, 1vh, 12px);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header-panel {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(7, 10, 19, 0.95) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: clamp(6px, 1vw, 10px);
+            padding: clamp(6px, 1vw, 10px) clamp(10px, 1.5vw, 16px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+        }
+
+        .title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .title {
+            font-family: 'Bebas Neue', 'Impact', sans-serif;
+            font-size: clamp(18px, 2.5vw, 26px);
+            letter-spacing: 1.5px;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            line-height: 1;
+        }
+
+        .subtitle {
+            font-size: clamp(8px, 0.8vw, 10px);
+            color: #ffd400;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            font-size: clamp(7px, 0.8vw, 9px);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 2px 6px;
+            border-radius: 99px;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.15);
+        }
+
+        .status-pill::before {
+            content: '';
+            width: 4px;
+            height: 4px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.6; }
+            50% { transform: scale(1.3); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.6; }
+        }
+
+        /* Auto-adjusting Categories Grid */
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(clamp(240px, 30vw, 360px), 1fr));
+            gap: clamp(8px, 1.5vw, 16px);
+        }
+
+        .category-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: clamp(6px, 1vw, 10px);
+            padding: clamp(8px, 1.2vw, 12px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: clamp(6px, 1vw, 10px);
+        }
+
+        .category-card:hover {
+            border-color: rgba(56, 189, 248, 0.15);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .category-title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(255, 212, 0, 0.3);
+            padding-bottom: 4px;
+        }
+
+        .category-name {
+            font-family: 'Bebas Neue', 'Impact', sans-serif;
+            font-size: clamp(16px, 2vw, 20px);
+            letter-spacing: 1px;
+            color: #ffd400;
+            text-shadow: 0 0 8px rgba(255, 212, 0, 0.15);
+        }
+
+        .match-count {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: clamp(7px, 0.8vw, 9px);
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 99px;
+            color: #cbd5e1;
+        }
+
+        /* Match rows list */
+        .match-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+
+        /* Customize scrollbar */
+        .match-list::-webkit-scrollbar {
+            width: 3px;
+        }
+        .match-list::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .match-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 99px;
+        }
+
+        .match-row {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            padding: 6px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-6px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .match-row:hover {
+            background: rgba(30, 41, 59, 0.6);
+            border-color: rgba(255, 255, 255, 0.06);
+        }
+
+        .match-main {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+        }
+
+        .teams-versus {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+            font-size: clamp(11px, 1.2vw, 13px);
+            letter-spacing: 0.2px;
+        }
+
+        .team-label {
+            max-width: clamp(70px, 10vw, 110px);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-transform: uppercase;
+        }
+
+        .team-label.winner-highlight {
+            color: #ffd400;
+            text-shadow: 0 0 6px rgba(255, 212, 0, 0.15);
+        }
+
+        .versus-divider {
+            color: #64748b;
+            font-size: clamp(8px, 0.9vw, 10px);
+            font-weight: 400;
+        }
+
+        .match-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: clamp(7.5px, 0.7vw, 9px);
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .trophy-winner {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            color: #ffd400;
+            font-weight: 700;
+            background: rgba(255, 212, 0, 0.06);
+            border: 1px solid rgba(255, 212, 0, 0.12);
+            padding: 1px 4px;
+            border-radius: 3px;
+            text-transform: uppercase;
+        }
+
+        .score-box {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(2, 6, 23, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            padding: 3px 8px;
+            box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.5);
+            font-family: 'Bebas Neue', 'Impact', sans-serif;
+            font-size: clamp(14px, 1.5vw, 18px);
+            letter-spacing: 0.5px;
+            min-width: clamp(45px, 6vw, 55px);
+            justify-content: center;
+        }
+
+        .score-num {
+            color: #ffffff;
+        }
+        .score-num.win {
+            color: #ffd400;
+            text-shadow: 0 0 6px rgba(255, 212, 0, 0.3);
+        }
+        .score-divider {
+            color: #334155;
+            font-size: clamp(10px, 1.1vw, 13px);
+        }
+
+        .empty-history {
+            text-align: center;
+            color: #64748b;
+            font-size: 11px;
+            padding: 16px;
+            border: 1px dashed rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.2);
+        }
+
+        /* Fallbacks and Mobile Breakpoints */
+        @media (max-width: 640px) {
+            body {
+                padding: 6px;
+            }
+            .header-panel {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+                border-radius: 6px;
+            }
+            .category-card {
+                border-radius: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- Header Panel -->
+        <div class="header-panel">
+            <div class="title-group">
+                <div class="title">🏓 MATCH RESULTS LOG</div>
+                <div class="subtitle">Camsur Pickleball Club</div>
+            </div>
+            <div class="status-pill" id="sync-status">Live Broadcast Sync</div>
+        </div>
+
+        <!-- Categories grid, filled dynamically -->
+        <div class="categories-grid" id="categories-grid">
+            <div class="empty-history">Loading match records...</div>
+        </div>
+    </div>
+
+    <script>
+        let lastHistoryJson = "";
+
+        async function fetchHistory() {
+            try {
+                const resp = await fetch('/history-data', { cache: 'no-store' });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const dataString = JSON.stringify(data);
+                    
+                    // Only re-render if data has changed to prevent flickers
+                    if (dataString !== lastHistoryJson) {
+                        lastHistoryJson = dataString;
+                        renderHistory(data);
+                    }
+                    updateStatus(true);
+                } else {
+                    updateStatus(false);
+                }
+            } catch (e) {
+                updateStatus(false);
+            }
+        }
+
+        function updateStatus(online) {
+            const pill = document.getElementById('sync-status');
+            if (online) {
+                pill.textContent = 'Live Broadcast Sync';
+                pill.style.background = 'rgba(16, 185, 129, 0.1)';
+                pill.style.borderColor = 'rgba(16, 185, 129, 0.2)';
+                pill.style.color = '#10b981';
+            } else {
+                pill.textContent = 'Sync Offline';
+                pill.style.background = 'rgba(239, 68, 68, 0.1)';
+                pill.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+                pill.style.color = '#ef4444';
+            }
+        }
+
+        function renderHistory(matches) {
+            const grid = document.getElementById('categories-grid');
+            grid.innerHTML = "";
+
+            if (!matches || matches.length === 0) {
+                grid.innerHTML = '<div class="empty-history">No matches have been saved yet. Click "Save Match" on the controller panel to log results!</div>';
+                return;
+            }
+
+            // Group by category
+            const categories = {};
+            matches.forEach(match => {
+                const cat = (match.Category || "UNSPECIFIED").trim().toUpperCase();
+                if (!categories[cat]) {
+                    categories[cat] = [];
+                }
+                categories[cat].push(match);
+            });
+
+            // Sort category names alphabetically
+            const sortedCategories = Object.keys(categories).sort();
+
+            sortedCategories.forEach(catName => {
+                const matchGroup = categories[catName];
+                
+                // Sort matches by timestamp descending (newest first)
+                matchGroup.sort((a, b) => {
+                    return new Date(b.Timestamp) - new Date(a.Timestamp);
+                });
+
+                // Create category card
+                const card = document.createElement('div');
+                card.className = 'category-card';
+
+                // Category Title Bar
+                const titleBar = document.createElement('div');
+                titleBar.className = 'category-title-bar';
+                
+                const titleText = document.createElement('div');
+                titleText.className = 'category-name';
+                titleText.textContent = catName;
+
+                const countBadge = document.createElement('span');
+                countBadge.className = 'match-count';
+                countBadge.textContent = `${matchGroup.length} Matches`;
+
+                titleBar.appendChild(titleText);
+                titleBar.appendChild(countBadge);
+                card.appendChild(titleBar);
+
+                // Match List Container
+                const listContainer = document.createElement('div');
+                listContainer.className = 'match-list';
+
+                matchGroup.forEach(match => {
+                    const row = document.createElement('div');
+                    row.className = 'match-row';
+
+                    const t1_name = match['Team 1 Name'] || 'FIRST PLAYER';
+                    const t2_name = match['Team 2 Name'] || 'SECOND PLAYER';
+                    const t1_score = match['Team 1 Score'] || 0;
+                    const t2_score = match['Team 2 Score'] || 0;
+                    const winner = (match['Winner'] || '').trim().toUpperCase();
+                    const timestamp = match['Timestamp'] || '';
+
+                    // Check which team is highlighted winner
+                    const isT1Winner = winner === t1_name.toUpperCase();
+                    const isT2Winner = winner === t2_name.toUpperCase();
+
+                    // Left Block (Main Info)
+                    const mainInfo = document.createElement('div');
+                    mainInfo.className = 'match-main';
+
+                    // Team Versus Text
+                    const versusDiv = document.createElement('div');
+                    versusDiv.className = 'teams-versus';
+
+                    const t1Span = document.createElement('span');
+                    t1Span.className = `team-label ${isT1Winner ? 'winner-highlight' : ''}`;
+                    t1Span.textContent = t1_name;
+
+                    const vsDivider = document.createElement('span');
+                    vsDivider.className = 'versus-divider';
+                    vsDivider.textContent = 'VS';
+
+                    const t2Span = document.createElement('span');
+                    t2Span.className = `team-label ${isT2Winner ? 'winner-highlight' : ''}`;
+                    t2Span.textContent = t2_name;
+
+                    versusDiv.appendChild(t1Span);
+                    versusDiv.appendChild(vsDivider);
+                    versusDiv.appendChild(t2Span);
+
+                    // Meta Row (Timestamp + Winner Tag)
+                    const metaRow = document.createElement('div');
+                    metaRow.className = 'match-meta';
+
+                    const timeSpan = document.createElement('span');
+                    timeSpan.textContent = formatDate(timestamp);
+                    metaRow.appendChild(timeSpan);
+
+                    if (winner && winner !== 'TIE') {
+                        const winnerTag = document.createElement('span');
+                        winnerTag.className = 'trophy-winner';
+                        winnerTag.innerHTML = `🏆 ${winner}`;
+                        metaRow.appendChild(winnerTag);
+                    }
+
+                    mainInfo.appendChild(versusDiv);
+                    mainInfo.appendChild(metaRow);
+
+                    // Right Block (Scores)
+                    const scoreBox = document.createElement('div');
+                    scoreBox.className = 'score-box';
+
+                    const s1Span = document.createElement('span');
+                    s1Span.className = `score-num ${isT1Winner ? 'win' : ''}`;
+                    s1Span.textContent = t1_score;
+
+                    const scoreDivider = document.createElement('span');
+                    scoreDivider.className = 'score-divider';
+                    scoreDivider.textContent = ':';
+
+                    const s2Span = document.createElement('span');
+                    s2Span.className = `score-num ${isT2Winner ? 'win' : ''}`;
+                    s2Span.textContent = t2_score;
+
+                    scoreBox.appendChild(s1Span);
+                    scoreBox.appendChild(scoreDivider);
+                    scoreBox.appendChild(s2Span);
+
+                    row.appendChild(mainInfo);
+                    row.appendChild(scoreBox);
+                    listContainer.appendChild(row);
+                });
+
+                card.appendChild(listContainer);
+                grid.appendChild(card);
+            });
+        }
+
+        // Helper to format date strings cleanly
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const date = new Date(dateStr.replace(/-/g, '/')); // Handle Safari compatibility
+                const options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+                return date.toLocaleDateString('en-US', options);
+            } catch (e) {
+                return dateStr;
+            }
+        }
+
+        // Poll for history updates every 5 seconds
+        setInterval(fetchHistory, 5000);
+        fetchHistory();
+    </script>
+</body>
+</html>

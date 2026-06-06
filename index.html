@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pickleball Scoreboard - Control</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0d1527 0%, #070a13 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 8px;
+            gap: 6px;
+            color: #ffffff;
+        }
+
+        .scoreboard {
+            background: rgba(15, 23, 42, 0.85);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 8px 12px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            max-width: 680px;
+            width: 100%;
+            backdrop-filter: blur(12px);
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            gap: 8px;
+        }
+
+        .title-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .title {
+            font-family: 'Bebas Neue', 'Impact', sans-serif;
+            font-size: 18px;
+            letter-spacing: 1px;
+            color: #ffffff;
+            font-weight: normal;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .server-status {
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 1px 5px;
+            border-radius: 999px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            transition: all 0.3s ease;
+        }
+
+        .server-status.offline {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            text-shadow: 0 0 8px rgba(239, 68, 68, 0.25);
+        }
+
+        .server-status:not(.offline) {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            text-shadow: 0 0 8px rgba(16, 185, 129, 0.25);
+        }
+
+        .display-link a {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 2px 6px rgba(2, 132, 199, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .display-link a:hover {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(14, 165, 233, 0.3);
+            text-decoration: none;
+            color: #ffffff;
+        }
+
+        .category-container {
+            margin-bottom: 6px;
+            width: 100%;
+        }
+
+        .category-container input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            color: #ffd400;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .category-container input:focus {
+            border-color: #ffd400;
+            box-shadow: 0 0 6px rgba(255, 212, 0, 0.15);
+            outline: none;
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .dashboard-content {
+            display: flex;
+            gap: 8px;
+            align-items: stretch;
+        }
+
+        .left-col {
+            flex: 1 1 65%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .right-col {
+            flex: 1 1 35%;
+            background: rgba(30, 41, 59, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 6px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .teams-container {
+            display: flex;
+            gap: 8px;
+            height: 100%;
+        }
+
+        .team {
+            background: rgba(30, 41, 59, 0.35);
+            padding: 6px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .team:hover {
+            border-color: rgba(56, 189, 248, 0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        .team-name {
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            justify-content: center;
+        }
+
+        .team-name input {
+            background: rgba(15, 23, 42, 0.6);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            width: 100%;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+        }
+
+        .team-name input:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 6px rgba(56, 189, 248, 0.15);
+            outline: none;
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .score-display {
+            background: #020617;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            padding: 6px 6px 4px 6px;
+            margin-bottom: 4px;
+            box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .score-display:hover {
+            transform: translateY(-1px) scale(1.01);
+            border-color: rgba(255, 212, 0, 0.3);
+            box-shadow: 0 3px 12px rgba(255, 212, 0, 0.1), inset 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .score {
+            font-family: 'Bebas Neue', 'Impact', sans-serif;
+            font-size: 36px;
+            font-weight: 900;
+            color: #ffd400;
+            line-height: 1;
+            text-shadow: 0 0 12px rgba(255, 212, 0, 0.2);
+            letter-spacing: 1px;
+        }
+
+        .click-tip {
+            font-size: 7px;
+            font-weight: 700;
+            color: #64748b;
+            letter-spacing: 0.8px;
+            margin-top: 1px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+
+        .score-display:hover .click-tip {
+            color: #ffd400;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 4px 8px;
+            font-size: 11px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            min-width: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button:active {
+            transform: scale(0.92) !important;
+        }
+
+        .btn-decrease {
+            background-color: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-decrease:hover {
+            background-color: #ef4444;
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-increase {
+            background-color: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-increase:hover {
+            background-color: #10b981;
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+        }
+
+        .btn-serving {
+            background-color: rgba(255, 212, 0, 0.05);
+            color: #ffd400;
+            border: 1px solid rgba(255, 212, 0, 0.15);
+            padding: 6px;
+            font-size: 10px;
+        }
+
+        .btn-serving:hover {
+            background-color: #ffd400;
+            color: #070a13;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(255, 212, 0, 0.2);
+        }
+
+        .btn-reset {
+            background-color: rgba(245, 158, 11, 0.08);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.15);
+            padding: 6px;
+            font-size: 10px;
+        }
+
+        .btn-reset:hover {
+            background-color: #f59e0b;
+            color: #070a13;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.2);
+        }
+
+        .btn-save-match {
+            grid-column: span 2;
+            background-color: rgba(2, 132, 199, 0.08);
+            color: #38bdf8;
+            border: 1px solid rgba(2, 132, 199, 0.15);
+            padding: 6px;
+            font-size: 10px;
+            height: 26px;
+            border-radius: 4px;
+        }
+
+        .btn-save-match:hover {
+            background-color: #0284c7;
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(2, 132, 199, 0.2);
+        }
+
+        .game-status {
+            text-align: center;
+            color: #cbd5e1;
+            font-size: 9px;
+            font-weight: 500;
+            padding: 4px 6px;
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .game-status.win {
+            color: #10b981;
+            font-weight: 700;
+            border-color: rgba(16, 185, 129, 0.2);
+            background: rgba(16, 185, 129, 0.08);
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.15);
+        }
+
+        .footer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+            padding-top: 4px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 9px;
+            color: #64748b;
+            width: 100%;
+            gap: 12px;
+        }
+
+        .shortcuts-inline strong {
+            color: #38bdf8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-right: 3px;
+        }
+
+        .brand-footer {
+            font-family: 'Bebas Neue', 'Impact', sans-serif;
+            font-size: 13px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.2);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            cursor: default;
+            transition: color 0.3s;
+        }
+
+        .brand-footer:hover {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .shortcut-toggle {
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .shortcut-toggle input {
+            margin-right: 3px;
+            accent-color: #38bdf8;
+            vertical-align: middle;
+            cursor: pointer;
+        }
+
+        @media (max-width: 600px) {
+            .dashboard-content {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .left-col, .right-col {
+                flex: 1 1 100%;
+            }
+
+            .header-row {
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .display-link {
+                width: 100%;
+                text-align: center;
+            }
+
+            .display-link a {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .footer-row {
+                flex-direction: column;
+                gap: 6px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="scoreboard">
+        <!-- Header: Title, Server Status, OBS Display Link -->
+        <div class="header-row">
+            <div class="title-group">
+                <span class="title">🏓 PICKLEBALL CONTROL</span>
+                <span class="server-status" id="server-status">Connecting...</span>
+            </div>
+            <div class="display-link" style="display: flex; gap: 6px;">
+                <a href="display.html" target="_blank">📺 Open Display</a>
+                <a href="history.html" target="_blank" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);">📜 Match Log</a>
+            </div>
+        </div>
+
+        <!-- Match Category Editor -->
+        <div class="category-container">
+            <input type="text" id="match-category" placeholder="MATCH CATEGORY (e.g. MIXED DOUBLES)" value="MIXED DOUBLES" oninput="saveCategory()">
+        </div>
+
+        <!-- Dashboard Body: Left Column (Teams/Scores) and Right Column (Controls) -->
+        <div class="dashboard-content">
+            <div class="left-col">
+                <div class="teams-container">
+                    <!-- Team 1 -->
+                    <div class="team">
+                        <div class="team-name">
+                            <input type="text" id="team1-name" placeholder="Team 1" value="Team 1"
+                                oninput="savePlayers()">
+                        </div>
+                        <div class="score-display" onclick="increaseTeam1()" title="Click to increment score">
+                            <div class="score" id="team1-score">0</div>
+                            <div class="click-tip">TAP TO +1</div>
+                        </div>
+                        <div class="buttons">
+                            <button class="btn-decrease" onclick="decreaseTeam1()">-</button>
+                            <button class="btn-increase" onclick="increaseTeam1()">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Team 2 -->
+                    <div class="team">
+                        <div class="team-name">
+                            <input type="text" id="team2-name" placeholder="Team 2" value="Team 2"
+                                oninput="savePlayers()">
+                        </div>
+                        <div class="score-display" onclick="increaseTeam2()" title="Click to increment score">
+                            <div class="score" id="team2-score">0</div>
+                            <div class="click-tip">TAP TO +1</div>
+                        </div>
+                        <div class="buttons">
+                            <button class="btn-decrease" onclick="decreaseTeam2()">-</button>
+                            <button class="btn-increase" onclick="increaseTeam2()">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-col">
+                <!-- Grid of Serving & Action controls -->
+                <div class="button-grid">
+                    <button class="btn-serving" onclick="setServing(1)" id="serve-btn-1">🟡 T1 Serve</button>
+                    <button class="btn-serving" onclick="setServing(2)" id="serve-btn-2">🟡 T2 Serve</button>
+                    <button class="btn-reset" onclick="swapSides()">↔️ Swap Sides</button>
+                    <button class="btn-reset" onclick="resetScore()">🔄 Reset Score</button>
+                    <button class="btn-save-match" onclick="saveMatch()">💾 Save Match</button>
+                </div>
+
+                <!-- Game Status Info Box -->
+                <div class="game-status-box">
+                    <div id="game-status" class="game-status">Only the serving team can score.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer: Shortcuts, Brand Footer, and Enable Checkbox -->
+        <div class="footer-row">
+            <div class="shortcuts-inline">
+                <strong>Shortcuts:</strong> Q/A: ±1 T1 | P/L: ±1 T2 | S: Serve | R: Reset
+            </div>
+            <div class="brand-footer">Camsur Pickleball Club</div>
+            <div class="shortcut-toggle">
+                <label><input type="checkbox" id="shortcut-toggle" onchange="toggleShortcuts()"> Keyboard</label>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let team1Score = 0;
+        let team2Score = 0;
+        let serving = 1; // 1 or 2
+        let serverAvailable = false;
+        let saveTimer = null;
+        let localLastUpdated = 0;
+        let shortcutsEnabled = true;
+        let gameWon = false;
+        const SAVE_DEBOUNCE_MS = 250;
+
+        async function loadData() {
+            loadShortcutSetting();
+            try {
+                const resp = await fetch('/state', { cache: 'no-store' });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    team1Score = data.team1Score || 0;
+                    team2Score = data.team2Score || 0;
+                    serving = data.serving || 1;
+                    localLastUpdated = data.lastUpdated || Date.now();
+                    document.getElementById('team1-name').value = data.team1Name || 'Team 1';
+                    document.getElementById('team2-name').value = data.team2Name || 'Team 2';
+                    document.getElementById('match-category').value = data.category || 'MIXED DOUBLES';
+                    updateServerStatus(true);
+                    updateServingButtons();
+                    renderDisplay();
+                    return;
+                }
+            } catch (e) {
+                updateServerStatus(false);
+            }
+
+            const saved = localStorage.getItem('pickleballScore');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    team1Score = data.team1Score || 0;
+                    team2Score = data.team2Score || 0;
+                    serving = data.serving || 1;
+                    localLastUpdated = data.lastUpdated || Date.now();
+                    document.getElementById('team1-name').value = data.team1Name || 'Team 1';
+                    document.getElementById('team2-name').value = data.team2Name || 'Team 2';
+                    document.getElementById('match-category').value = data.category || 'MIXED DOUBLES';
+                } catch (e) { }
+            }
+            updateServingButtons();
+            renderDisplay();
+            updateServerStatus(false);
+        }
+
+        function updateServerStatus(available) {
+            serverAvailable = available;
+            const status = document.getElementById('server-status');
+            if (!status) return;
+            if (available) {
+                status.textContent = 'Live server connection';
+                status.classList.remove('offline');
+            } else {
+                status.textContent = 'Offline — using local state only';
+                status.classList.add('offline');
+            }
+        }
+
+        function scheduleSave() {
+            if (saveTimer) {
+                clearTimeout(saveTimer);
+            }
+            saveTimer = setTimeout(saveData, SAVE_DEBOUNCE_MS);
+        }
+
+        async function saveData() {
+            saveTimer = null;
+            const data = {
+                team1Score,
+                team2Score,
+                team1Name: document.getElementById('team1-name').value,
+                team2Name: document.getElementById('team2-name').value,
+                category: document.getElementById('match-category').value,
+                serving
+            };
+
+            try {
+                localStorage.setItem('pickleballScore', JSON.stringify({ ...data, lastUpdated: Date.now() }));
+            } catch (e) { }
+
+            try {
+                const resp = await fetch('/state', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (resp.ok) {
+                    const result = await resp.json();
+                    team1Score = typeof result.team1Score === 'number' ? result.team1Score : team1Score;
+                    team2Score = typeof result.team2Score === 'number' ? result.team2Score : team2Score;
+                    serving = result.serving || serving;
+                    localLastUpdated = result.lastUpdated || Date.now();
+                    document.getElementById('team1-name').value = result.team1Name || document.getElementById('team1-name').value;
+                    document.getElementById('team2-name').value = result.team2Name || document.getElementById('team2-name').value;
+                    document.getElementById('match-category').value = result.category || document.getElementById('match-category').value;
+                    renderDisplay();
+                    updateServingButtons();
+                }
+                updateServerStatus(resp.ok);
+            } catch (e) {
+                updateServerStatus(false);
+            }
+        }
+
+        function renderDisplay() {
+            document.getElementById('team1-score').textContent = team1Score;
+            document.getElementById('team2-score').textContent = team2Score;
+        }
+
+        function scorePoint(team) {
+            if (gameWon || team !== 1 && team !== 2) return;
+
+            const status = document.getElementById('game-status');
+            const name = team === 1 ? document.getElementById('team1-name').value : document.getElementById('team2-name').value;
+            if (serving === team) {
+                if (team === 1) {
+                    team1Score++;
+                } else {
+                    team2Score++;
+                }
+                status.textContent = `${name} scored!`;
+            } else {
+                setServing(team);
+                status.textContent = `Serve switches to ${name}. No point scored.`;
+            }
+            updateDisplay();
+            checkGameWin();
+        }
+
+        function decreaseTeam1() {
+            if (team1Score > 0) {
+                team1Score--;
+                gameWon = false;
+            }
+            updateDisplay();
+            checkGameWin();
+        }
+
+        function decreaseTeam2() {
+            if (team2Score > 0) {
+                team2Score--;
+                gameWon = false;
+            }
+            updateDisplay();
+            checkGameWin();
+        }
+
+        function increaseTeam1() {
+            scorePoint(1);
+        }
+
+        function increaseTeam2() {
+            scorePoint(2);
+        }
+
+        function checkGameWin() {
+            const status = document.getElementById('game-status');
+            const targetScore = 11;
+            const diff = Math.abs(team1Score - team2Score);
+            const winner = team1Score > team2Score ? 1 : 2;
+
+            if ((team1Score >= targetScore || team2Score >= targetScore) && diff >= 2) {
+                const winnerName = winner === 1 ? document.getElementById('team1-name').value : document.getElementById('team2-name').value;
+                status.textContent = `Match won by ${winnerName}!`;
+                status.classList.add('win');
+                gameWon = true;
+                updateDisplay();
+                return;
+            }
+            gameWon = false;
+            status.classList.remove('win');
+        }
+
+        function resetScore() {
+            team1Score = 0;
+            team2Score = 0;
+            serving = 1;
+            gameWon = false;
+            const status = document.getElementById('game-status');
+            status.textContent = 'Only the serving team can score.';
+            status.classList.remove('win');
+            localLastUpdated = Date.now();
+            renderDisplay();
+            updateServingButtons();
+            scheduleSave();
+        }
+
+        async function saveMatch() {
+            const status = document.getElementById('game-status');
+            if (!gameWon) {
+                status.textContent = 'Cannot save match: there is no winner yet!';
+                status.classList.add('offline');
+                setTimeout(() => {
+                    status.classList.remove('offline');
+                    status.textContent = gameWon ? status.textContent : 'Only the serving team can score.';
+                }, 3000);
+                return;
+            }
+            try {
+                const resp = await fetch('/save_match', {
+                    method: 'POST'
+                });
+                if (resp.ok) {
+                    const result = await resp.json();
+                    if (result.status === 'success') {
+                        status.textContent = 'Match successfully saved to MATCH.xlsx!';
+                        status.classList.add('win');
+                        setTimeout(() => {
+                            status.classList.remove('win');
+                            resetScore();
+                        }, 3000);
+                    } else {
+                        status.textContent = `Error saving match: ${result.error}`;
+                    }
+                } else {
+                    status.textContent = 'Failed to save match. Server error.';
+                }
+            } catch (e) {
+                status.textContent = 'Error connecting to server to save match.';
+            }
+        }
+
+        function swapSides() {
+            const team1Input = document.getElementById('team1-name');
+            const team2Input = document.getElementById('team2-name');
+            const tempName = team1Input.value;
+            team1Input.value = team2Input.value;
+            team2Input.value = tempName;
+
+            const tempScore = team1Score;
+            team1Score = team2Score;
+            team2Score = tempScore;
+
+            if (serving === 1) {
+                serving = 2;
+            } else if (serving === 2) {
+                serving = 1;
+            }
+
+            gameWon = false;
+            renderDisplay();
+            updateServingButtons();
+            scheduleSave();
+        }
+
+        async function setServing(player) {
+            serving = player;
+            localLastUpdated = Date.now();
+            updateServingButtons();
+            scheduleSave();
+        }
+
+        function updateServingButtons() {
+            const btn1 = document.getElementById('serve-btn-1');
+            const btn2 = document.getElementById('serve-btn-2');
+            const servingStatus = document.getElementById('serving-status');
+
+            if (serving === 1) {
+                btn1.style.opacity = '1';
+                btn1.style.transform = 'scale(1.1)';
+                btn2.style.opacity = '0.5';
+                btn2.style.transform = 'scale(1)';
+            } else {
+                btn1.style.opacity = '0.5';
+                btn1.style.transform = 'scale(1)';
+                btn2.style.opacity = '1';
+                btn2.style.transform = 'scale(1.1)';
+            }
+
+            if (servingStatus) {
+                const name = serving === 1 ? document.getElementById('team1-name').value : document.getElementById('team2-name').value;
+                servingStatus.textContent = `Serving: ${name}`;
+            }
+        }
+
+        function updateDisplay() {
+            renderDisplay();
+            localLastUpdated = Date.now();
+            scheduleSave();
+        }
+
+        function savePlayers() {
+            localLastUpdated = Date.now();
+            scheduleSave();
+        }
+
+        function saveCategory() {
+            localLastUpdated = Date.now();
+            scheduleSave();
+        }
+
+        function toggleShortcuts() {
+            const checkbox = document.getElementById('shortcut-toggle');
+            shortcutsEnabled = checkbox.checked;
+            try {
+                localStorage.setItem('pickleballShortcutsEnabled', shortcutsEnabled ? '1' : '0');
+            } catch (e) { }
+        }
+
+        function loadShortcutSetting() {
+            try {
+                const stored = localStorage.getItem('pickleballShortcutsEnabled');
+                if (stored === '0' || stored === '1') {
+                    shortcutsEnabled = stored === '1';
+                }
+            } catch (e) { }
+            const checkbox = document.getElementById('shortcut-toggle');
+            if (checkbox) {
+                checkbox.checked = shortcutsEnabled;
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!shortcutsEnabled) return;
+            if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+            if (e.key === 'q' || e.key === 'Q') scorePoint(1);
+            if (e.key === 'a' || e.key === 'A') decreaseTeam1();
+            if (e.key === 'p' || e.key === 'P') scorePoint(2);
+            if (e.key === 'l' || e.key === 'L') decreaseTeam2();
+            if (e.key === 'r' || e.key === 'R') resetScore();
+            if (e.key === 's' || e.key === 'S') {
+                setServing(serving === 1 ? 2 : 1);
+            }
+        });
+
+        setInterval(async () => {
+            try {
+                const resp = await fetch('/state', { cache: 'no-store' });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (localLastUpdated === 0 || (data.lastUpdated && data.lastUpdated > localLastUpdated)) {
+                        team1Score = typeof data.team1Score === 'number' ? data.team1Score : team1Score;
+                        team2Score = typeof data.team2Score === 'number' ? data.team2Score : team2Score;
+                        serving = data.serving || serving;
+                        localLastUpdated = data.lastUpdated || localLastUpdated;
+                        const team1Input = document.getElementById('team1-name');
+                        const team2Input = document.getElementById('team2-name');
+                        const categoryInput = document.getElementById('match-category');
+                        if (document.activeElement !== team1Input) {
+                            team1Input.value = data.team1Name || team1Input.value;
+                        }
+                        if (document.activeElement !== team2Input) {
+                            team2Input.value = data.team2Name || team2Input.value;
+                        }
+                        if (document.activeElement !== categoryInput) {
+                            categoryInput.value = data.category || categoryInput.value;
+                        }
+                        renderDisplay();
+                        updateServingButtons();
+                    }
+                    updateServerStatus(true);
+                }
+            } catch (e) {
+                updateServerStatus(false);
+            }
+        }, 1000);
+
+        loadData();
+    </script>
+</body>
+
+</html>
